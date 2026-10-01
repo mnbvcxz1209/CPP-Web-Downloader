@@ -50,7 +50,7 @@ struct Stats {
     int imageFiles;
     int otherFiles;
     long long totalBytes;
-    int estimatedTotalFiles;  // ★ 新增：預估總檔案數
+    int estimatedTotalFiles;  // 預估總檔案數
     chrono::steady_clock::time_point startTime;
     
     Stats() : totalFiles(0), htmlFiles(0), imageFiles(0), otherFiles(0), 
@@ -63,7 +63,7 @@ struct Stats {
         return chrono::duration<double>(now - startTime).count();
     }
     
-    // ★ 計算預估剩餘時間
+    //  計算預估剩餘時間
     double getEstimatedRemainingSeconds(int queueSize) {
         if (totalFiles == 0) return 0.0;
         
@@ -74,7 +74,7 @@ struct Stats {
         return avgTimePerFile * queueSize;
     }
     
-    // ★ 計算完成百分比
+    //  計算完成百分比
     double getProgressPercentage(int queueSize) {
         int processed = totalFiles;
         int total = processed + queueSize;
@@ -94,7 +94,7 @@ private:
     bool downloadDocuments;
     string baseHost;
     
-    // ★ 新增：進階功能
+    // 進階功能
     set<string> fileTypeFilter;     // 檔案類型過濾（空集合表示下載所有類型）
     long long minFileSize;           // 最小檔案大小（bytes，0 表示無限制）
     long long maxFileSize;           // 最大檔案大小（bytes，0 表示無限制）
@@ -104,14 +104,14 @@ private:
     map<string, bool> downloadStatus;
     Stats stats;
     
-    // 解析 URL（加強版 - 更嚴格）
+    // 解析 URL
     URL parseURL(const string& urlStr) {
         URL url;
         size_t pos = 0;
         
-        // ★ 重要：先檢查 URL 格式是否正確
+        // 檢查 URL 格式是否正確
         if (urlStr.find("http:/") != string::npos && urlStr.find("http://") == string::npos) {
-            // 發現錯誤格式 "http:/" 而不是 "http://"
+            // 發現錯誤格式
             cout << "[錯誤] URL 格式不正確: " << urlStr << endl;
             return url;  // 返回空 URL
         }
@@ -122,7 +122,7 @@ private:
             url.protocol = urlStr.substr(0, protocolEnd);
             pos = protocolEnd + 3;
         } else {
-            // 沒有協議，可能是相對路徑，這不應該出現在這裡 default http
+            
             url.protocol = "http";
             pos = 0;
         }
@@ -143,7 +143,7 @@ private:
                 url.port = 80;
             }
         } else {
-            url.host = urlStr.substr(pos);//如果網址末尾沒有 / → 自動補 /
+            url.host = urlStr.substr(pos);
             url.path = "/";
             url.port = 80;
         }
@@ -265,8 +265,7 @@ private:
         vector<string> links;
         set<string> uniqueLinks;  // 避免重複
         
-        // 提取所有可能的資源連結
-        // 使用更精確的正則表達式，避免抓到錯誤內容
+        
         
         // 1. <a href="..."> - 網頁連結
         regex hrefPattern(R"(<a\s+[^>]*href\s*=\s*["']([^"']+)["'])", regex::icase);
@@ -296,7 +295,6 @@ private:
                 link.erase(link.find_last_not_of(" \t\r\n") + 1);
                 
                 // 驗證提取的連結是否合法
-                // 避免抓到包含 "http:/" 這種錯誤格式
                 bool isValid = true;
                 
                 // 檢查是否包含不合法的字符
@@ -331,12 +329,11 @@ private:
             return "";
         }
         
-        // ★ 關鍵：如果已經是完整的絕對 URL，直接返回，不要處理
         if (link.find("http://") == 0 || link.find("https://") == 0) {
-            return link;  // 直接返回，不做任何修改
+            return link;  
         }
         
-        // 如果是協議相對 URL (//example.com/...) link like "images/cat.jpg"
+        
         if (link.find("//") == 0) {
             URL baseUrl = parseURL(base);
             return baseUrl.protocol + ":" + link;
@@ -344,7 +341,7 @@ private:
         
         URL baseUrl = parseURL(base);
         
-        // 處理從根目錄開始的絕對路徑 (例如: /images/pic.png)
+        // 處理從根目錄開始的絕對路徑 
         if (link[0] == '/') {
             string result = baseUrl.protocol + "://" + baseUrl.host;
             if (baseUrl.port != 80 && baseUrl.port != 443) {
@@ -354,16 +351,16 @@ private:
             return result;
         }
         
-        // 處理相對路徑 (例如: image.jpg 或 ../images/pic.png 或 ./image.jpg)
+        // 處理相對路徑
         string basePath = baseUrl.path;
         
-        // 如果 base URL 的 path 以檔案結尾（包含副檔名），移除檔名保留目錄
+       
         size_t lastSlash = basePath.find_last_of('/');
         size_t lastDot = basePath.find_last_of('.');
         
-        // 判斷是否為檔案（有副檔名且在最後一個斜線之後）
+        // 判斷是否為檔案（
         if (lastDot != string::npos && lastSlash != string::npos && lastDot > lastSlash) {
-            // 這是一個檔案，移除檔名
+            // 這是一個檔案
             basePath = basePath.substr(0, lastSlash + 1);
         } else {
             // 這是一個目錄，確保以 / 結尾
@@ -420,7 +417,7 @@ private:
             baseDir += "_" + to_string(currentPage.port);
         }
         
-        // HTML 檔案的完整路徑（可能不只是 index.html）
+        // HTML 檔案的完整路徑
         string htmlFilePath = getLocalPath(baseURL);
         
         cout << "  當前頁面：" << htmlFilePath << endl;
@@ -532,11 +529,11 @@ private:
             return (toLastSlash != string::npos) ? toPath.substr(toLastSlash + 1) : toPath;
         }
         
-        // ★ 跨域名：需要返回絕對路徑（從當前位置往上）
+        //  跨域名：需要返回絕對路徑
         // 例如：從 hsccl.fr.to/animals/cats.htm 到 hsccl.us.to/images/image.jpg
         // 結果：../../hsccl.us.to/images/image.jpg
         
-        // 計算 fromPath 的深度（有多少層目錄）
+        // 計算 fromPath 的深度
         int depth = 0;
         for (size_t i = fromFirstSlash; i < fromRelative.length(); i++) {
             if (fromRelative[i] == '/') depth++;
@@ -548,7 +545,7 @@ private:
             relativePath += "../";
         }
         
-        // 加上目標路徑（從 output/ 之後的完整路徑）
+        // 加上目標路徑
         relativePath += toRelative;
         
         return relativePath;
@@ -556,7 +553,7 @@ private:
     bool createDirectories(const string& path) {
         if (path.empty()) return true;
         
-        // 使用 mkdir -p 命令（最可靠的方法）
+        // 使用 mkdir -p 命令
         string cmd = "mkdir -p \"" + path + "\" 2>/dev/null";
         int result = system(cmd.c_str());
         
@@ -564,7 +561,7 @@ private:
             return true;
         }
         
-        // 如果系統命令失敗，嘗試手動建立
+        
         vector<string> dirs;
         string current;
         
@@ -595,19 +592,19 @@ private:
         return true;
     }
     
-    // 取得本地檔案路徑（完全修正版）
+    // 取得本地檔案路徑
     string getLocalPath(const string& url) {
         URL parsed = parseURL(url);
         
         // 基礎路徑：output/主機名/
         string basePath = outputDir + "/" + parsed.host;
         
-        // 加上端口（如果不是預設端口）
+        // 加上端口
         if (parsed.port != 80 && parsed.port != 443) {
             basePath += "_" + to_string(parsed.port);
         }
         
-        // ★ 關鍵：判斷檔案類型
+        // 判斷檔案類型
         string lowerPath = parsed.path;
         transform(lowerPath.begin(), lowerPath.end(), lowerPath.begin(), ::tolower);
         
@@ -616,7 +613,7 @@ private:
                        lowerPath.find(".png") != string::npos ||
                        lowerPath.find(".gif") != string::npos);
         
-        // ★★★ 所有圖片都放在 images/ 目錄（無論原始路徑是什麼）
+        // 所有圖片都放在 images/ 目錄
         if (isImage) {
             // 從原始路徑提取檔名
             size_t lastSlash = parsed.path.find_last_of('/');
@@ -626,7 +623,7 @@ private:
             // 生成唯一檔名以避免衝突
             string uniqueFilename = generateUniqueFilename(parsed.path, filename);
             
-            // ★ 所有圖片統一放在 images/ 目錄下
+            //  所有圖片統一放在 images/ 目錄下
             return basePath + "/images/" + uniqueFilename;
         }
         
@@ -649,12 +646,9 @@ private:
         return path;
     }
     
-    // 生成唯一檔名（避免衝突）
+    // 生成唯一檔名
     string generateUniqueFilename(const string& fullPath, const string& filename) {
         // 如果檔案在根目錄或 images/ 直接目錄下，直接使用檔名
-        // 例如：/image.jpg → image.jpg
-        //      /images/image.jpg → images_image.jpg
-        
         // 計算路徑中有多少層目錄
         int slashCount = 0;
         for (char c : fullPath) {
@@ -710,7 +704,7 @@ private:
         return "";
     }
     
-    // ★ 檢查檔案類型是否符合過濾條件
+    // 檢查檔案類型是否符合過濾條件
     bool isFileTypeAllowed(const string& url) {
         // 如果沒有設定過濾，允許所有類型
         if (fileTypeFilter.empty()) {
@@ -719,13 +713,13 @@ private:
         
         string ext = getFileExtension(url);
         if (ext.empty()) {
-            return true;  // 沒有副檔名的檔案默認允許（如 HTML 頁面）
+            return true;  // 沒有副檔名的檔案默認允許
         }
         
         return fileTypeFilter.find(ext) != fileTypeFilter.end();
     }
     
-    // ★ 檢查檔案大小是否符合限制
+    //  檢查檔案大小是否符合限制
     bool isFileSizeAllowed(long long fileSize) {
         // 檢查最小大小
         if (minFileSize > 0 && fileSize < minFileSize) {
@@ -769,7 +763,7 @@ private:
             lower.find(".jpeg") != string::npos || lower.find(".gif") != string::npos ||
             lower.find(".svg") != string::npos || lower.find(".webp") != string::npos) return "IMAGE";
         
-        // ★ 文件類型（通常不需要下載）
+        //  文件類型
         if (lower.find(".pdf") != string::npos || lower.find(".doc") != string::npos ||
             lower.find(".docx") != string::npos || lower.find(".ppt") != string::npos ||
             lower.find(".pptx") != string::npos || lower.find(".xls") != string::npos ||
@@ -779,14 +773,14 @@ private:
         return "OTHER";
     }
     
-    // 儲存檔案（簡化且可靠的版本）
+    // 儲存檔案
     bool saveFile(const string& path, const string& content) {
         // 先確保父目錄存在
         size_t lastSlash = path.find_last_of('/');
         if (lastSlash != string::npos) {
             string dirPath = path.substr(0, lastSlash);
             
-            // 使用系統命令建立目錄（最可靠）
+            // 使用系統命令建立目錄
             string cmd = "mkdir -p \"" + dirPath + "\"";
             system(cmd.c_str());
             
@@ -818,7 +812,7 @@ private:
         return false;
     }
     
-    // 顯示下載進度（改進版 - 包含檔案資訊）
+    // 顯示下載進度
     void displayProgress(const string& url, long long received, long long total, double speed, const string& fileType) {
         cout << "\r[下載中] ";
         
@@ -850,7 +844,7 @@ private:
         cout << "        " << flush;  // 清除多餘字元
     }
     
-    // 顯示統計資訊（改進版 - 包含剩餘時間）
+    // 顯示統計資訊
     void displayStats() {
         int queueSize = urlQueue.size();
         double elapsed = stats.getElapsedSeconds();
@@ -859,13 +853,13 @@ private:
         
         cout << "\n\n========== 下載統計 ==========\n";
         
-        // ★ 進度資訊
+        //  進度資訊
         cout << "【進度】\n";
         cout << "  完成度: " << fixed << setprecision(1) << progress << "%\n";
         cout << "  已下載: " << stats.totalFiles << " 個檔案\n";
         cout << "  待下載: " << queueSize << " 個檔案\n";
         
-        // ★ 時間資訊
+        //  時間資訊
         cout << "\n【時間】\n";
         cout << "  已耗時: " << formatTime(elapsed) << "\n";
         if (queueSize > 0 && stats.totalFiles > 0) {
@@ -892,7 +886,7 @@ private:
         cout << "==============================\n\n";
     }
     
-    // ★ 格式化時間顯示
+    //  格式化時間顯示
     string formatTime(double seconds) {
         if (seconds < 60) {
             return to_string((int)seconds) + " 秒";
@@ -922,7 +916,7 @@ public:
         cout << "[設定] 下載外部網站: " << (downloadExternal ? "是" : "否") << endl;
         cout << "[設定] 下載文件檔案: " << (downloadDocuments ? "是" : "否") << endl;
         
-        // ★ 顯示檔案類型過濾
+        //  顯示檔案類型過濾
         if (!fileTypeFilter.empty()) {
             cout << "[設定] 僅下載檔案類型: ";
             bool first = true;
@@ -934,7 +928,7 @@ public:
             cout << endl;
         }
         
-        // ★ 顯示檔案大小限制
+        //  顯示檔案大小限制
         if (minFileSize > 0) {
             cout << "[設定] 最小檔案大小: " << minFileSize / 1024 << " KB" << endl;
         }
@@ -942,7 +936,7 @@ public:
             cout << "[設定] 最大檔案大小: " << maxFileSize / 1024 << " KB" << endl;
         }
         
-        // ★ 測試 URL 解析和路徑生成
+        //  測試 URL 解析和路徑生成
         testURLProcessing();
     }
     
@@ -1029,18 +1023,18 @@ public:
         // 判斷檔案類型
         string fileType = getFileType(url, headers);
         
-        // ★ 關鍵修正：HTML 頁面需要特殊處理
+        //  HTML 頁面需要特殊處理
         bool isHTML = (fileType == "HTML");
         bool shouldDownload = true;  // 是否應該下載此檔案
         
-        // ★ 檢查檔案類型過濾（HTML 頁面永遠處理，用於提取連結）
+        //  檢查檔案類型過濾
         if (!isHTML && !isFileTypeAllowed(url)) {
             string ext = getFileExtension(url);
             cout << "[跳過類型] " << url << " (." << ext << ")" << endl;
             shouldDownload = false;
         }
         
-        // ★ 檢查檔案大小限制（HTML 頁面永遠處理）
+        //  檢查檔案大小限制
         long long fileSize = body.length();
         if (!isHTML && shouldDownload && !isFileSizeAllowed(fileSize)) {
             cout << "[跳過大小] " << url << " (" << fileSize / 1024 << " KB)" << endl;
@@ -1053,7 +1047,7 @@ public:
             shouldDownload = false;
         }
         
-        // ★ 檢查是否為文件檔案
+        //  檢查是否為文件檔案
         if (fileType == "DOCUMENT" && !downloadDocuments) {
             cout << "[跳過文件] " << url << " (使用 --docs 下載)" << endl;
             shouldDownload = false;
@@ -1067,7 +1061,7 @@ public:
         displayProgress(url, body.length(), body.length(), speed, fileType);
         cout << " [完成]" << endl;
         
-        // ★ 如果是 HTML，轉換連結為本地路徑
+        //  如果是 HTML，轉換連結為本地路徑
         string finalContent = body;
         if (isHTML) {
             finalContent = convertLinksToLocal(body, url);
@@ -1083,7 +1077,7 @@ public:
         cout << "  類型: " << fileType << endl;
         cout << "  本地路徑: " << localPath << endl;
         
-        // ★ 只儲存符合條件的檔案
+        // 只儲存符合條件的檔案
         if (shouldDownload) {
             // 儲存檔案
             if (saveFile(localPath, finalContent)) {
@@ -1103,8 +1097,7 @@ public:
             cout << "[○ 已處理但未儲存] (用於提取連結)" << endl;
         }
         
-        // ★ 關鍵修改：即使深度達到 maxDepth，也要解析 HTML 提取連結
-        // 這樣可以下載當前頁面連結的圖片
+        //  關鍵修改：即使深度達到 maxDepth，也要解析 HTML 提取連結
         if (fileType == "HTML") {
             cout << "\n[解析連結] 從 " << url << " (當前深度: " << depth << "/" << maxDepth << ")" << endl;
             vector<string> links = extractLinks(body, url);
@@ -1133,7 +1126,7 @@ public:
                     string typeStr = isHtmlLink ? "HTML" : (isImageLink ? "圖片" : "其他");
                     string externalStr = isExternal ? " [外部]" : "";
                     
-                    // ★ 重要：HTML 連結只在深度未達上限時加入
+                    // HTML 連結只在深度未達上限時加入
                     // 但圖片連結總是加入（深度 +1），這樣可以下載當前頁面的圖片
                     if (isHtmlLink) {
                         htmlLinks++;
@@ -1176,7 +1169,7 @@ public:
         return true;
     }
     
-    // BFS 下載（改進版 - 顯示即時進度）
+    // BFS 下載
     void startDownload() {
         cout << "\n========== 開始下載 ==========\n";
         cout << "目標 URL: " << baseURL << "\n";
@@ -1203,7 +1196,7 @@ public:
             
             processedCount++;
             
-            // ★ 顯示整體進度（每次下載檔案時）
+            //  顯示整體進度（每次下載檔案時）
             auto now = chrono::steady_clock::now();
             double elapsed = chrono::duration<double>(now - lastDisplayTime).count();
             
@@ -1231,7 +1224,7 @@ public:
         displayStats();
     }
     
-    // ★ 顯示整體進度（簡化版）
+    //  顯示整體進度（簡化版）
     void displayOverallProgress(int processedCount) {
         int queueSize = urlQueue.size();
         double progress = stats.getProgressPercentage(queueSize);
@@ -1373,7 +1366,7 @@ void interactiveMode() {
     cin >> documentsChoice;
     bool documents = (documentsChoice == 'y' || documentsChoice == 'Y');
     
-    // ★ 進階功能：檔案類型過濾
+    // 檔案類型過濾
     set<string> typeFilter;
     cout << "\n是否設定檔案類型過濾？(y/n): ";
     cin >> filterChoice;
@@ -1402,7 +1395,7 @@ void interactiveMode() {
         cout << endl;
     }
     
-    // ★ 進階功能：檔案大小限制
+    // 檔案大小限制
     long long minSize = 0, maxSize = 0;
     cout << "\n是否設定檔案大小限制？(y/n): ";
     cin >> sizeChoice;
